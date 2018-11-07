@@ -1,4 +1,4 @@
-#include <jni.h>
+#include <jni.h>;
 #include <string>
 #include <android/log.h>
 #include <android/native_window_jni.h>
@@ -13,18 +13,7 @@ extern "C" {
 #include "libavutil/imgutils.h"
 #include <libswresample/swresample.h>
 }
-#define LOGD(FORMAT, ...) __android_log_print(ANDROID_LOG_DEBUG,"YJ_FFMPGE_DEMO------>>",FORMAT,##__VA_ARGS__);
-extern "C" JNIEXPORT jstring
-
-JNICALL
-Java_com_dovar_ffmpeg_1so_MainActivity_stringFromJNI(
-        JNIEnv *env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    av_register_all();
-    avdevice_register_all();
-    return env->NewStringUTF(hello.c_str());
-}
+#define LOGD(FORMAT, ...) __android_log_print(ANDROID_LOG_DEBUG,"DOVAR_FFMPGE------>>",FORMAT,##__VA_ARGS__);
 
 
 extern "C" JNIEXPORT jstring
@@ -123,68 +112,6 @@ Java_com_dovar_ffmpeg_1so_MainActivity_avfilterinfo(
     }
     return env->NewStringUTF(info);
 }
-
-/*int main(int argc, char **argv) {
-    //1.注册
-    av_register_all();
-
-    //2.申请AVFormatContext
-    AVOutputFormat *fmt;
-    AVFormatContext *oc;
-    avformat_alloc_output_context2(&oc, NULL, "flv", filename);
-    if (!oc) {
-        printf("cannot alloc flv format\n");
-        return 1;
-    }
-    fmt = oc->oformat;
-
-    //3.申请AVStream
-    AVStream *st;
-    AVCodecContext *c;
-    st = avformat_new_stream(oc, NULL);
-    if (!ost->st) {
-        fprintf(stderr, "could not allocate stream\n");
-        exit(1);
-    }
-    st->id = oc->nb_streams - 1;
-
-    //copy the stream parameters to the muxer
-    int ret =avcodec_parameters_from_context(ost->st->codecpar,c);
-    if(ret<0){
-        printf("could not copy the stream parameters\n");
-        exit(1);
-    }
-
-    //4.增加目标容器头信息
-    ret=avformat_write_header(oc,&opt);
-    if (ret<0){
-        printf("Error occurred when opening output file: %s\n",av_err2str(ret));
-        return 1;
-    }
-
-    //5.写入帧数据
-    AVFormatContext *ifmt_ctx=NULL;
-    AVIOContext read_in=avio_alloc_context(inbuffer,32*1024,0,NULL,get_input_buffer,NULL,NULL);
-    if(read_in==NULL){
-        goto end;
-    }
-    ifmt_ctx->pb=read_in;
-    ifmt_ctx->flags=AVFMT_FLAG_CUSTOM_IO;
-    if((ret=avformat_open_input(&ifmt_ctx,"h264",NULL,NULL))<0){
-        av_log(NULL,AV_LOG_ERROR,"cannot get h264 memory data\n");
-        return ret;
-    }
-
-    while (1){
-        AVPacket pkt={0};
-        av_init_packet(&pkt);
-        if(ret<0)
-            break;
-
-    }
-
-    return 0;
-}*/
 
 /*int flush_encoder(AVFormatContext *fmt_ctx, unsigned int stream_index) {
     int ret;
@@ -484,7 +411,7 @@ void start() {
     avcodec_receive_frame();
 }*/
 
-//视频解码
+/*//视频解码
 extern "C" JNIEXPORT void
 
 JNICALL
@@ -506,7 +433,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
     //注册
     av_register_all();
 //    avformat_network_init();
-    //分配码流结构体
+    //为码流结构体分配内存
     avFormatContext = avformat_alloc_context();
     //打开流地址
     if (avformat_open_input(&avFormatContext, input, NULL, NULL) != 0) {
@@ -538,13 +465,13 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
         LOGD("Codec not found.\n");
         return;
     }
-    AVCodecParserContext *parserContext = av_parser_init(codecParameters->codec_id);
-    if (!parserContext) {
-        LOGD("Parser not found\n");
-        return;
-    }
+    *//*  AVCodecParserContext *parserContext = av_parser_init(codecParameters->codec_id);
+      if (!parserContext) {
+          LOGD("Parser not found\n");
+          return;
+      }*//*
     //分配解码器上下文
-    avCodecContext = avcodec_alloc_context3(avCodec);
+    avCodecContext = avFormatContext->streams[videoIndex]->codec;;
     if (!avCodecContext) {
         LOGD("分配 解码器上下文失败\n");
         return;
@@ -564,19 +491,20 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
     //内存分配
     //AVPacket用于存储一帧一帧的压缩数据（H264）
     AVPacket *avPacket = av_packet_alloc();
+//    av_init_packet()
     //AVFrame用于存储解码后的像素数据(YUV)
     AVFrame *avFrame = av_frame_alloc();
 
-
-    /* *//*** 转码相关BEGIN ***//*
+    *//*** 转码相关BEGIN ***//*
     //用于存储转码后的像素数据
     AVFrame *avFrameYUV = av_frame_alloc();
     LOGD("内存分配完成")
     AVPixelFormat dstFormat = AV_PIX_FMT_RGBA;
     //缓冲区分配内存
-    uint8_t *out_buffer = (uint8_t *) av_malloc(
-            (size_t) (av_image_get_buffer_size(dstFormat,
-                                               avCodecContext->width, avCodecContext->height, 1)));
+    uint8_t *out_buffer = (uint8_t *) av_malloc((size_t) (av_image_get_buffer_size(dstFormat,
+                                                                                   avCodecContext->width,
+                                                                                   avCodecContext->height,
+                                                                                   1)));
     LOGD("缓冲区分配完成")
     //初始化缓冲区
     av_image_fill_arrays(avFrameYUV->data, avFrameYUV->linesize,
@@ -598,9 +526,9 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
         LOGD("sws_ctx==null\n");
         return;
     }
-    *//*** 转码相关END ***/
+    *//*** 转码相关END ***//*
 
-    FILE *fp_yuv = fopen(input, "rb");
+//    FILE *fp_yuv = fopen(input, "rb");
     LOGD("开始准备原生绘制工具")
     //android原生绘制工具
     ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, surface);
@@ -647,16 +575,16 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
                 //4 输入数据第一列要转码的位置 从0开始
                 //5 输入画面的高度
                 //执行转码
-                /* sws_scale(sws_ctx, (const uint8_t *const *) (avFrame->data),//源数据
+                *//* sws_scale(sws_ctx, (const uint8_t *const *) (avFrame->data),//源数据
                            avFrame->linesize,
                            0,
                            avCodecContext->height,//源切片的高度
                            avFrameYUV->data,//转码后数据
                            avFrameYUV->linesize);
-                 *//* int y_size = avCodecContext->width * avCodecContext->height;
+                 *//**//* int y_size = avCodecContext->width * avCodecContext->height;
                  fwrite(avFrameYUV->data[0], 1, y_size, fp_yuv);//Y
                  fwrite(avFrameYUV->data[1], 1, y_size / 4, fp_yuv);//U
-                 fwrite(avFrameYUV->data[2], 1, y_size / 4, fp_yuv);//V*//*
+                 fwrite(avFrameYUV->data[2], 1, y_size / 4, fp_yuv);//V*//**//*
                 LOGD("转换完成，开始解析转换后数据")
                 uint8_t *dst = (uint8_t *) outBuffer_na.bits;
                 //解码后的像素数据首地址
@@ -669,7 +597,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
                 int srcStride = avFrameYUV->linesize[0];
                 for (int i = 0; i < avCodecContext->height; i++) {
                     memcpy(dst + i * oneLineByte, src + i * srcStride, srcStride);
-                }*/
+                }*//*
 
                 //解锁窗口
                 ANativeWindow_unlockAndPost(nativeWindow);
@@ -681,12 +609,14 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
 
         //重置packet
         av_packet_unref(avPacket);
+        av_frame_unref(avFrame);
+//        av_frame_unref();
     }
     LOGD("开始释放资源");
 //    sws_freeContext(sws_ctx);
     ANativeWindow_release(nativeWindow);
 //    fclose(fp_yuv);
-    av_parser_close(parserContext);
+//    av_parser_close(parserContext);
     av_packet_free(&avPacket);
     av_frame_free(&avFrame);
 //    av_frame_free(&avFrameYUV);
@@ -698,11 +628,10 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlay(JNIEnv *env, jobject,
 #define INBUF_SIZE 4096
 
 static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
-                     char *filename)
-{
+                     char *filename) {
     FILE *f;
     int i;
-    f = fopen(filename,"w");
+    f = fopen(filename, "w");
     fprintf(f, "P5\n%d %d\n%d\n", xsize, ysize, 255);
     for (i = 0; i < ysize; i++)
         fwrite(buf + i * wrap, 1, xsize, f);
@@ -710,8 +639,7 @@ static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
 }
 
 static void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt,
-                   const char *filename)
-{
+                   const char *filename) {
     char buf[1024];
     int ret;
     ret = avcodec_send_packet(dec_ctx, pkt);
@@ -720,20 +648,19 @@ static void decode(AVCodecContext *dec_ctx, AVFrame *frame, AVPacket *pkt,
         exit(1);
     }
     LOGD("发送数据成功")
-    while (ret >= 0) {
-        LOGD("开始读取数据")
-        ret = avcodec_receive_frame(dec_ctx, frame);
+    while ((ret = avcodec_receive_frame(dec_ctx, frame)) >= 0) {
+        LOGD("开始读取数据:%d", ret)
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
-            return;
+            continue;
         else if (ret < 0) {
-            fprintf(stderr, "Error during decoding\n");
-            exit(1);
+            LOGD("Error during decoding\n");
+            continue;
         }
         LOGD("读取数据成功")
         printf("saving frame %3d\n", dec_ctx->frame_number);
         fflush(stdout);
-        /* the picture is allocated by the decoder. no need to
-           free it */
+        *//* the picture is allocated by the decoder. no need to
+           free it *//*
         snprintf(buf, sizeof(buf), "%s-%d", filename, dec_ctx->frame_number);
         pgm_save(frame->data[0], frame->linesize[0],
                  frame->width, frame->height, buf);
@@ -744,7 +671,7 @@ extern "C" JNIEXPORT void
 
 JNICALL
 Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
-                                                 jstring videoPath, jobject surface) {
+                                                     jstring videoPath, jobject surface) {
     if (surface == NULL) {
         LOGD("surface==null\n");
         return;
@@ -761,7 +688,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
     uint8_t inbuf[INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
     //注册
     av_register_all();
-    /* set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) */
+    *//* set end of buffer to 0 (this ensures that no overreading happens for damaged MPEG streams) *//*
     memset(inbuf + INBUF_SIZE, 0, AV_INPUT_BUFFER_PADDING_SIZE);
 
     //分配码流结构体
@@ -824,35 +751,36 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
     //AVFrame用于存储解码后的像素数据(YUV)
     AVFrame *avFrame = av_frame_alloc();
 
-    FILE* f = fopen(input, "rb");
-    if(!f){
+    FILE *f = fopen(input, "rb");
+    if (!f) {
         LOGD("Couldn't open input stream.\n");
         return;
     }
     uint8_t *data;
-    size_t   data_size;
-    while(!feof(f)){
-        /* read raw data from the input file */
+    size_t data_size;
+    while (!feof(f)) {
+        *//* read raw data from the input file *//*
         data_size = fread(inbuf, 1, INBUF_SIZE, f);
         if (!data_size)
             break;
-        /* use the parser to split the data into frames */
+        *//* use the parser to split the data into frames *//*
         data = inbuf;
         while (data_size > 0) {
-            int ret = av_parser_parse2(parserContext, avCodecContext, &avPacket->data, &avPacket->size,
-                                   data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
+            int ret = av_parser_parse2(parserContext, avCodecContext, &avPacket->data,
+                                       &avPacket->size,
+                                       data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0);
             if (ret < 0) {
                 fprintf(stderr, "Error while parsing\n");
                 exit(1);
             }
-            data      += ret;
+            data += ret;
             data_size -= ret;
             if (avPacket->size)
                 decode(avCodecContext, avFrame, avPacket, outfilename);
         }
     }
 
-    /* flush the decoder */
+    *//* flush the decoder *//*
     decode(avCodecContext, avFrame, NULL, outfilename);
 
     fclose(f);
@@ -860,27 +788,33 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
     avcodec_free_context(&avCodecContext);
     av_frame_free(&avFrame);
     av_packet_free(&avPacket);
-}
+//    avformat_close_input()
+}*/
 
 
 
 
 
 //音频解码
-/*void decodeAudio(void) {
+extern "C" JNIEXPORT void
+
+JNICALL
+Java_com_dovar_ffmpeg_1so_MainActivity_decodeAudio(JNIEnv *env, jobject obj,
+                                                   jstring audioPath) {
+    const char *file_name = (*env).GetStringUTFChars(audioPath, JNI_FALSE);
     //1.注册组件
     av_register_all();
     //封装格式上下文
     AVFormatContext *pFormatCtx = avformat_alloc_context();
 
     //2.打开输入音频文件
-    if (avformat_open_input(&pFormatCtx, "test.mp3", NULL, NULL) != 0) {
-        printf("%s", "打开输入音频文件失败");
+    if (avformat_open_input(&pFormatCtx, file_name, NULL, NULL) != 0) {
+        LOGD("%s", "打开输入音频文件失败");
         return;
     }
     //3.获取音频信息
     if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
-        printf("%s", "获取音频信息失败");
+        LOGD("%s", "获取音频信息失败");
         return;
     }
 
@@ -889,25 +823,33 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
     int i = 0;
     for (; i < pFormatCtx->nb_streams; i++) {
         //根据类型判断是否是音频流
-        if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
             audio_stream_idx = i;
             break;
         }
     }
     //4.获取解码器
+    AVCodec *pCodec = avcodec_find_decoder(
+            pFormatCtx->streams[audio_stream_idx]->codecpar->codec_id);
     //根据索引拿到对应的流,根据流拿到解码器上下文
-    AVCodecContext *pCodeCtx = pFormatCtx->streams[audio_stream_idx]->codec;
-    //再根据上下文拿到编解码id，通过该id拿到解码器
-    AVCodec *pCodec = avcodec_find_decoder(pCodeCtx->codec_id);
+    AVCodecContext *pCodeCtx = avcodec_alloc_context3(pCodec);
+    avcodec_parameters_to_context(pCodeCtx, pFormatCtx->streams[audio_stream_idx]->codecpar);
     if (pCodec == NULL) {
-        printf("%s", "无法解码");
+        LOGD("%s", "无法解码");
         return;
     }
     //5.打开解码器
     if (avcodec_open2(pCodeCtx, pCodec, NULL) < 0) {
-        printf("%s", "编码器无法打开");
+        LOGD("%s", "编码器无法打开");
         return;
     }
+
+    //输出视频信息
+    LOGD("音频的文件格式：%s", pFormatCtx->iformat->name);
+    LOGD("音频时长：%d", static_cast<int>((pFormatCtx->duration) / 1000000));
+    LOGD("音频的宽高：%d,%d", pCodeCtx->width, pCodeCtx->height);
+    LOGD("解码器的名称：%s", pCodec->name);
+
     //编码数据
     AVPacket *packet = (AVPacket *) av_malloc(sizeof(AVPacket));
     //解压缩数据
@@ -938,7 +880,23 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
     int out_channel_nb = av_get_channel_layout_nb_channels(out_ch_layout);
     //存储pcm数据
     uint8_t *out_buffer = (uint8_t *) av_malloc(2 * 44100);
-    FILE *fp_pcm = fopen("out.pcm", "wb");
+
+    jclass player_class = (env)->GetObjectClass(obj);
+    jmethodID audio_track_method = (*env).GetMethodID(player_class, "createAudioTrack",
+                                                      "(II)Landroid/media/AudioTrack;");
+    if (!audio_track_method) {
+        LOGD("audio_track_method not found...")
+    }
+    jobject audio_track = (env)->CallObjectMethod(obj, audio_track_method, out_sample_rate,
+                                                  out_channel_nb);
+    //调用play方法
+    jclass audio_track_class = (*env).GetObjectClass(audio_track);
+    jmethodID audio_track_play_mid = (*env).GetMethodID(audio_track_class, "play", "()V");
+    (*env).CallVoidMethod(audio_track, audio_track_play_mid);
+
+    //获取write()方法
+    jmethodID audio_track_write_mid = (*env).GetMethodID(audio_track_class, "write", "([BII)I");
+
     int framecount = 0;
     //6.一帧一帧读取压缩的音频数据AVPacket
     while (av_read_frame(pFormatCtx, packet) >= 0) {
@@ -946,31 +904,190 @@ Java_com_dovar_ffmpeg_1so_MainActivity_startPlayPure(JNIEnv *env, jobject,
             //解码AVPacket->AVFrame
             //发送压缩数据
             if (avcodec_send_packet(pCodeCtx, packet) != 0) {
-                printf("%s", "解码错误");
-                return;
+                LOGD("%s", "解码错误");
+                continue;
             }
 
             //读取到一帧音频或者视频
             while (avcodec_receive_frame(pCodeCtx, frame) == 0) {
-                printf("解码%d帧", framecount++);
+                LOGD("解码%d帧", framecount++);
                 swr_convert(swrCtx, &out_buffer, 2 * 44100,
-                            reinterpret_cast<const uint8_t **>(frame->data), frame->nb_samples);
+                            (const uint8_t **) (frame->data), frame->nb_samples);
                 //获取sample的size
                 int out_buffer_size = av_samples_get_buffer_size(NULL, out_channel_nb,
                                                                  frame->nb_samples,
                                                                  out_sample_fmt, 1);
-                //写入文件进行测试
-                fwrite(out_buffer, 1, static_cast<size_t>(out_buffer_size), fp_pcm);
+
+                jbyteArray audio_sample_array = (*env).NewByteArray(out_buffer_size);
+                jbyte *sample_byte_array = (*env).GetByteArrayElements(audio_sample_array, NULL);
+                //拷贝缓冲数据
+                memcpy(sample_byte_array, out_buffer, (size_t) out_buffer_size);
+                //释放数组
+                (*env).ReleaseByteArrayElements(audio_sample_array, sample_byte_array, 0);
+                //调用AudioTrack的write方法进行播放
+                (*env).CallIntMethod(audio_track, audio_track_write_mid,
+                                     audio_sample_array, 0, out_buffer_size);
+                //释放局部引用
+                (*env).DeleteLocalRef(audio_sample_array);
+                usleep(1000 * 16);
             }
         }
-        av_free_packet(packet);
+        av_packet_unref(packet);
     }
-    fclose(fp_pcm);
     av_frame_free(&frame);
     av_free(out_buffer);
     swr_free(&swrCtx);
     avcodec_close(pCodeCtx);
     avformat_close_input(&pFormatCtx);
-}*/
+}
+
+extern "C" JNIEXPORT void
+
+JNICALL
+Java_com_dovar_ffmpeg_1so_MainActivity_decodeVideo(JNIEnv *env, jobject,
+                                                   jstring videoPath, jobject surface) {
+    const char *file_name = (*env).GetStringUTFChars(videoPath, JNI_FALSE);
+
+    //注册
+    av_register_all();
+    //如果是网络流，则需要初始化网络相关
+    avformat_network_init();
+
+    AVFormatContext *pFormatCtx = avformat_alloc_context();
+    //打开视频文件
+    if (avformat_open_input(&pFormatCtx, file_name, NULL, NULL) != 0) {
+        LOGD("Could not open file:%s\n", file_name);
+        return;
+    }
+
+    //检索流信息
+    if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+        LOGD("Could not find stream information.\n");
+        return;
+    }
+
+    //查找视频流，一个多媒体文件中可能含有音频流、视频流、字幕流等
+    int videoStream = -1;
+    for (int i = 0; i < pFormatCtx->nb_streams; ++i) {
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            videoStream = i;
+            break;
+        }
+    }
+    if (videoStream == -1) {
+        LOGD("Didn't find a video stream.\n");
+        return;
+    }
+
+    //获取解码器
+    AVCodec *pCodec = avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
+    if (pCodec == NULL) {
+        LOGD("Codec not found.\n");
+        return;
+    }
+    //初始化解码器上下文
+    AVCodecContext *pCodecCtx = avcodec_alloc_context3(pCodec);
+    avcodec_parameters_to_context(pCodecCtx, pFormatCtx->streams[videoStream]->codecpar);
+    //打开解码器
+    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
+        LOGD("Could not open codec.\n");
+    }
+
+    //输出视频信息
+    LOGD("视频的文件格式：%s", pFormatCtx->iformat->name);
+    LOGD("视频时长：%d", static_cast<int>((pFormatCtx->duration) / 1000000));
+    LOGD("视频的宽高：%d,%d", pCodecCtx->width, pCodecCtx->height);
+    LOGD("解码器的名称：%s", pCodec->name);
+
+    LOGD("开始准备原生绘制工具")
+    //获取NativeWindow，用于渲染视频
+    ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, surface);
+    ANativeWindow_setBuffersGeometry(nativeWindow, pCodecCtx->width, pCodecCtx->height,
+                                     WINDOW_FORMAT_RGBA_8888);
+    //定义绘图缓冲区
+    ANativeWindow_Buffer windowBuffer;
+    LOGD("原生绘制工具准备完成")
+
+    /*** 转码相关BEGIN ***/
+    AVFrame *pFrameOut = av_frame_alloc();
+    if (pFrameOut == NULL) {
+        LOGD("Could not allocate video frame.\n");
+        return;
+    }
+    int num = av_image_get_buffer_size(AV_PIX_FMT_RGBA, pCodecCtx->width, pCodecCtx->height, 1);
+    uint8_t *buffer = (uint8_t *) (av_malloc(num * sizeof(uint8_t)));
+    av_image_fill_arrays(pFrameOut->data, pFrameOut->linesize, buffer, AV_PIX_FMT_RGBA,
+                         pCodecCtx->width, pCodecCtx->height, 1);
+    struct SwsContext *sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
+                                                pCodecCtx->pix_fmt, pCodecCtx->width,
+                                                pCodecCtx->height, AV_PIX_FMT_RGBA, SWS_BILINEAR,
+                                                NULL, NULL, NULL);
+    if (sws_ctx == NULL) {
+        LOGD("sws_ctx==null\n");
+        return;
+    }
+    /*** 转码相关END ***/
+
+    AVFrame *pFrame = av_frame_alloc();
+    AVPacket packet;
+    //读取帧数据
+    while (av_read_frame(pFormatCtx, &packet) >= 0) {
+        if (packet.stream_index == videoStream) {
+            //解码AVPacket->AVFrame
+            //发送读取到的压缩数据（每次发送可能包含一帧或多帧数据）
+            if (avcodec_send_packet(pCodecCtx, &packet) != 0) {
+                continue;
+            }
+
+            //读取到一帧视频
+            while (avcodec_receive_frame(pCodecCtx, pFrame) == 0) {
+                //锁定窗口绘图界面
+                ANativeWindow_lock(nativeWindow, &windowBuffer, 0);
+
+                //执行转码
+                sws_scale(sws_ctx, (uint8_t const *const *) pFrame->data, pFrame->linesize, 0,
+                          pCodecCtx->height, pFrameOut->data, pFrameOut->linesize);
+
+//                LOGD("转码完成，开始渲染数据.\n")
+                //获取stride
+                uint8_t *dst = (uint8_t *) windowBuffer.bits;
+                int dstStride = windowBuffer.stride * 4;
+                uint8_t *src = pFrameOut->data[0];
+                int srcStride = pFrameOut->linesize[0];
+                //由于窗口的stride和帧的stride不同，因此需要逐行复制
+                int h;
+                for (h = 0; h < pCodecCtx->height; h++) {
+                    memcpy(dst + h * dstStride, src + h * srcStride, (size_t) (srcStride));
+                }
+
+                //解锁窗口
+                ANativeWindow_unlockAndPost(nativeWindow);
+                /*  //进行短暂休眠。如果休眠时间太长会导致播放的每帧画面有延迟感，如果短会有加速播放的感觉。
+                  //一般一每秒60帧——16毫秒一帧的时间进行休眠
+                  usleep(1000 * 20);*/
+            }
+        }
+
+        //重置packet
+        av_packet_unref(&packet);
+    }
+
+    //回收资源
+    //释放图像帧
+    av_frame_free(&pFrame);
+    av_frame_free(&pFrameOut);
+    av_free(buffer);
+    //关闭转码上下文
+    sws_freeContext(sws_ctx);
+    //关闭解码器
+    avcodec_close(pCodecCtx);
+    //关闭视频文件
+    avformat_close_input(&pFormatCtx);
+    //注销网络相关
+    avformat_network_deinit();
+
+    avformat_free_context(pFormatCtx);
+}
+
 
 

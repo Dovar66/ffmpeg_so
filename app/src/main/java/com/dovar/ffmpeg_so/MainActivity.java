@@ -1,18 +1,21 @@
 package com.dovar.ffmpeg_so;
 
-import android.graphics.PixelFormat;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Surface;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.TextView;
 
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity {
-    String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath()+ File.separator+"vcamera";
+public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
+    String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath() + File.separator + "vcamera";
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -34,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Example of a call to a native method
         final TextView tv = (TextView) findViewById(R.id.sample_text);
-        tv.setText(stringFromJNI());
         tv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,30 +59,12 @@ public class MainActivity extends AppCompatActivity {
                 i++;
             }
         });
-        final SurfaceView mSurfaceView = findViewById(R.id.surface);
-        mSurfaceView.getHolder().setFormat(PixelFormat.RGBA_8888);
-        mSurfaceView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-
-                        startPlayPure(path + "/finish.mp4", mSurfaceView.getHolder().getSurface());
-                    }
-                }).start();
-            }
-        }, 5000);
+        SurfaceView mSurfaceView = findViewById(R.id.surface);
+        mSurfaceView.getHolder().addCallback(this);
     }
 
     int i = 0;
 
-
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    public native String stringFromJNI();
 
     public native String urlprotocolinfo();
 
@@ -90,9 +74,52 @@ public class MainActivity extends AppCompatActivity {
 
     public native String avfilterinfo();
 
-//    public native String muxing();
+    public native void decodeVideo(String videoPath, Surface mSurface);
 
-    public native void startPlay(String videoPath, Surface mSurface);
-    public native void startPlayPure(String videoPath, Surface mSurface);
+    public native void decodeAudio(String audioPath);
 
+    @Override
+    public void surfaceCreated(final SurfaceHolder holder) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                decodeVideo(path + File.separator + "test.mp4", holder.getSurface());
+                decodeAudio(path + File.separator + "music.mp3");
+            }
+        }).start();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+
+    }
+
+
+    /**
+     * 创建一个AudioTrack对象
+     *
+     * @param sampleRate 采样率
+     * @param channels   声道布局
+     */
+    public AudioTrack createAudioTrack(int sampleRate, int channels) {
+        int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+        int channelConfig;
+        if (channels == 1) {
+            channelConfig = AudioFormat.CHANNEL_OUT_MONO;
+        } else if (channels == 2) {
+            channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+        } else {
+            channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+        }
+
+        int bufferSizeInBytes = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+
+        return new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig, audioFormat,
+                bufferSizeInBytes, AudioTrack.MODE_STREAM);
+    }
 }
