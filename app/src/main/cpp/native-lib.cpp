@@ -50,7 +50,7 @@ typedef struct MPlayer {
     pthread_t write_thread;
     pthread_t video_thread;
     pthread_t audio_thread;
-}MPlayer;
+} MPlayer;
 
 typedef struct Decoder {
     MPlayer *player;
@@ -1395,10 +1395,25 @@ void *playAudio(void *arg) {
     pthread_exit(&p_audio);//与上面这行区别在哪里
 }
 
+#include "queue"
 
+std::queue<AVFrame *> queueFrame;
+
+pthread_t mutexFrame;
+pthread_t playVideo;
+
+int putAvframe(AVFrame *avFrame) {
+    pthread_mutex_lock(&mutexFrame);
+    queueFrame.push(avFrame);
+    pthread_mutex_unlock(&mutexFrame);
+    return 0;
+}
+
+void *decodeVideoToQueue(void *arg) {
+
+}
 
 //音视频同步
-/*
 extern "C" JNIEXPORT void
 
 JNICALL
@@ -1414,27 +1429,22 @@ Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jobject obj,
     pFormatCtx = avformat_alloc_context();
     pthread_create(&p_audio, NULL, playAudio, pFormatCtx);
 
+    if (videoStream != -1) {
+        pthread_create(&mutexFrame, NULL, decodeVideoToQueue, NULL);
+        video = pFormatCtx->streams[videoStream];
 
-    */
-/* if (videoStream != -1) {
-         video = pFormatCtx->streams[videoStream];
+        //获取视频解码器上下文
+        AVCodecContext *pCodecCtx_video = openAVCodecContext(pFormatCtx, videoStream);
+        LOGD("开始准备原生绘制工具")
+        //获取NativeWindow，用于渲染视频
+        nativeWindow = ANativeWindow_fromSurface(env, surface);
+        ANativeWindow_setBuffersGeometry(nativeWindow, pCodecCtx_video->width,
+                                         pCodecCtx_video->height,
+                                         WINDOW_FORMAT_RGBA_8888);
 
-         //获取视频解码器上下文
-         AVCodecContext *pCodecCtx_video = openAVCodecContext(pFormatCtx, videoStream);
-         LOGD("开始准备原生绘制工具")
-         //获取NativeWindow，用于渲染视频
-         nativeWindow = ANativeWindow_fromSurface(env, surface);
-         ANativeWindow_setBuffersGeometry(nativeWindow, pCodecCtx_video->width,
-                                          pCodecCtx_video->height,
-                                          WINDOW_FORMAT_RGBA_8888);
+        LOGD("原生绘制工具准备完成")
 
-         LOGD("原生绘制工具准备完成")
-
-         *//*
-*/
-/*** 转码相关BEGIN ***//*
-*/
-/*
+        /** 转码相关BEGIN **/
         pFrameOut = av_frame_alloc();
         if (pFrameOut == NULL) {
             LOGD("Could not allocate video frame.\n");
@@ -1455,11 +1465,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jobject obj,
             LOGD("sws_ctx==null\n");
             return;
         }
-        *//*
-*/
-/*** 转码相关END ***//*
-*/
-/*
+        /**转码相关END **/
 
         AVFrame *pFrame = av_frame_alloc();
         AVPacket packet_video;
@@ -1476,6 +1482,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jobject obj,
                 double last_delay;
                 //读取到一帧视频
                 while (avcodec_receive_frame(pCodecCtx_video, pFrame) == 0) {
+                    queueFrame.push(pFrame);
                     int64_t pts = av_frame_get_best_effort_timestamp(pFrame);
                     double duration = av_q2d(video->time_base) * pts;
                     duration = synchronize(pFrame, duration);
@@ -1512,7 +1519,7 @@ Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jobject obj,
         sws_freeContext(sws_ctx);
         //关闭解码器
         avcodec_close(pCodecCtx_video);
-    }*//*
+    }
 
 
     //关闭视频文件
@@ -1522,7 +1529,6 @@ Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jobject obj,
 
     avformat_free_context(pFormatCtx);
 }
-*/
 
 #define MAX_AUDIO_FRAME_SIZE 48000 * 4
 #define PACKET_SIZE 50
@@ -1757,7 +1763,7 @@ void *decode_func(void *arg) {
     return NULL;
 }
 
-extern "C" JNIEXPORT jint
+/*extern "C" JNIEXPORT jint
 JNICALL Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jclass clazz) {
     pthread_mutex_init(&player->mutex, NULL);
     pthread_cond_init(&player->cond, NULL);
@@ -1780,7 +1786,7 @@ JNICALL Java_com_dovar_ffmpeg_1so_MainActivity_play(JNIEnv *env, jclass clazz) {
     pthread_join(player->audio_thread, NULL);
 
     return 0;
-}
+}*/
 
 //初始化输入格式上下文
 int init_input_format_context(MPlayer *player, const char *file_name) {
@@ -1937,7 +1943,8 @@ void delete_queue(MPlayer *player) {
 extern "C" JNIEXPORT jint
 
 JNICALL
-Java_com_dovar_ffmpeg_1so_MainActivity_setup(JNIEnv *env, jclass clazz, jstring filePath, jobject surface) {
+Java_com_dovar_ffmpeg_1so_MainActivity_setup(JNIEnv *env, jclass clazz, jstring filePath,
+                                             jobject surface) {
 
     env->GetJavaVM(&javaVM);//获取JavaVM
     const char *file_name = (env)->GetStringUTFChars(filePath, JNI_FALSE);

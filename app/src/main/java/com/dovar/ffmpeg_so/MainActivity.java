@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     public native int setup(String filePath, Object surface);
 
-    public native int play();
+//    public native int play();
 
     public native String urlprotocolinfo();
 
@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     public native void decodeAudio(String audioPath);
 
-//    public native void play(String videoPath, Surface mSurface);
+    public native void play(String videoPath, Surface mSurface);
 
 
     @Override
@@ -90,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             @Override
             public void run() {
 //                decodeAudio(path + File.separator + "music.mp3");
-                setup(path + File.separator + "test.mp4", holder.getSurface());
-                play();
+//                setup(path + File.separator + "test.mp4", holder.getSurface());
+                play(path + File.separator + "test.mp4", holder.getSurface());
             }
         }).start();
 
