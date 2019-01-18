@@ -15,7 +15,11 @@ import android.widget.TextView;
 import java.io.File;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
-    String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath() + File.separator + "vcamera";
+    String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES).getPath() + File.separator + "vcamera"+ File.separator + "test.mp4";
+
+    String m3u8="http://vfile1.grtn.cn/2019/1547/7409/1934/154774091934.ssm/154774091934.m3u8";
+    String mp4="http://live1-cloud.itouchtv.cn/recordings/z1.touchtv-1.5c4042aaa3d5ec6bdef9a8e7/302dad26693a7ae9351725ebb47daf9e.mp4";
+
 
     // Used to load the 'native-lib' library on application startup.
     static {
@@ -77,10 +81,6 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     public native String avfilterinfo();
 
-    public native void decodeVideo(String videoPath, Surface mSurface);
-
-    public native void decodeAudio(String audioPath);
-
     public native void play(String videoPath, Surface mSurface);
 
 
@@ -89,18 +89,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         new Thread(new Runnable() {
             @Override
             public void run() {
-//                decodeAudio(path + File.separator + "music.mp3");
 //                setup(path + File.separator + "test.mp4", holder.getSurface());
-                play(path + File.separator + "test.mp4", holder.getSurface());
+//                play(path , holder.getSurface());
+                play(m3u8, holder.getSurface());
             }
         }).start();
-
-       /* new Thread(new Runnable() {
-            @Override
-            public void run() {
-                decodeVideo(path + File.separator + "test.mp4", holder.getSurface());
-            }
-        }).start();*/
     }
 
     @Override

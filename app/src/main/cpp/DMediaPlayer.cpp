@@ -1,5 +1,7 @@
 //
 // Created by heweizong on 2019/1/18.
+// 设置视频路径的时候开始预加载，开启两个子线程分别解码音频和视频数据，数据保存到dataQueue
+// 用户调用play时，启动线程从播放，
 //
 #include <jni.h>
 #include <android/log.h>
