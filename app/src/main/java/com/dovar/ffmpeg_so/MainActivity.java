@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     int i = 0;
 
-    public native int setup(String filePath, Object surface);
+//    public native int setup(String filePath, Object surface);
 
 //    public native int play();
 
